@@ -26,7 +26,7 @@ ENV PYTHONPATH=/app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-RUN poetry lock --no-update
+RUN poetry lock
 
 # Install Python dependencies
 RUN poetry install --no-root

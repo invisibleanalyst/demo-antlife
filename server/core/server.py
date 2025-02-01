@@ -69,7 +69,6 @@ def make_middleware() -> List[Middleware]:
             on_error=on_auth_error,
         ),
         Middleware(SQLAlchemyMiddleware),
-        # Middleware(ResponseLoggerMiddleware),
     ]
     return middleware
 
@@ -83,38 +82,56 @@ async def init_user():
     return users[0]
 
 
-def read_csv_files_from_directory(directory_path):
+def generate_csv_export_url(spreadsheet_id: str, gid: str) -> str:
     """
-    Reads all CSV files from the specified directory and loads them into pandas DataFrames.
+    Generates a CSV export URL for a specific sheet in a Google Spreadsheet.
 
-    :param directory_path: The path to the directory containing CSV files.
-    :return: A dictionary where keys are filenames and values are pandas DataFrames.
+    :param spreadsheet_id: The ID of the Google Spreadsheet.
+    :param gid: The gid of the sheet.
+    :return: A CSV export URL.
     """
-    dataframes = []
+    return f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid={gid}"
 
-    for root, _, files in os.walk(directory_path):
-        for file in files:
-            if file.endswith(".csv"):
-                file_path = os.path.join(root, file)
-                df = pd.read_csv(file_path)
 
-                dataframes.append(
-                    {
-                        "head": convert_dataframe_to_dict(df.head()),
-                        "file_name": file,
-                        "file_path": file_path,
-                    }
-                )
+def read_google_sheet(sheet_url: str, sheet_name: str):
+    """
+    Reads data from a specific sheet in a Google Spreadsheet.
 
-    return dataframes
+    :param sheet_url: The CSV export URL of the sheet.
+    :param sheet_name: The name of the sheet (for identification).
+    :return: A dictionary with the DataFrame head, file name, and file path.
+    """
+    try:
+        df = pd.read_csv(sheet_url)
+        # Debugging: Print the first few rows of the data
+        print(f"Data from sheet '{sheet_name}':\n{df.head()}")
+        return {
+            "head": convert_dataframe_to_dict(df.head()),
+            "file_name": f"{sheet_name}_Data",
+            "file_path": sheet_url,
+        }
+    except Exception as e:
+        raise ValueError(f"Failed to read the sheet '{sheet_name}': {e}")
 
 
 async def init_database():
     user = await init_user()
-    directory_path = os.path.join(os.path.dirname(__file__), "..", "data")
-    datasets = read_csv_files_from_directory(directory_path)
-    space_repository = WorkspaceRepository(Workspace, db_session=session)
+    spreadsheet_id = "1YoVfTgZNDk6d8OvKRWFnkIyqQFp6vMShBNjApCrzdK4"  # Replace with your actual spreadsheet ID
 
+    # Map sheet names to their respective gid values
+    sheets = {
+        "campaign_data": "989190315",
+        "maintenance_data": "1469795776",
+        "room_management_data": "931441619",
+    }
+
+    sheet_data = []
+    for sheet_name, gid in sheets.items():
+        sheet_url = generate_csv_export_url(spreadsheet_id, gid)
+        data = read_google_sheet(sheet_url, sheet_name)
+        sheet_data.append(data)
+
+    space_repository = WorkspaceRepository(Workspace, db_session=session)
     space = await space_repository.create_default_space_in_org(
         organization_id=user.memberships[0].organization_id, user_id=user.id
     )
@@ -124,7 +141,7 @@ async def init_database():
     )
 
     await space_controller.reset_space_datasets(space.id)
-    await space_controller.add_csv_datasets(datasets, user, space.id)
+    await space_controller.add_csv_datasets(sheet_data, user, space.id)
 
 
 def create_app() -> FastAPI:

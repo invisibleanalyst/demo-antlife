@@ -10,7 +10,7 @@ const LogoDark = ({
 }) => {
   return (
     <Image
-      src="/img/logo/logo.png"
+      src="/img/logo/logo-antlife.png"
       alt="Logo"
       width={width}
       height={height}
