@@ -4,7 +4,7 @@ PandasAI platform uses a dockerized client-server architecture. You will need to
 
 ```bash
 git clone https://github.com/invisibleanalyst/demo-antlife
-cd pandas-ai
+cd demo-antlife
 docker-compose build
 ```
 
