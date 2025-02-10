@@ -3,7 +3,7 @@
 PandasAI platform uses a dockerized client-server architecture. You will need to have Docker installed on your machine.
 
 ```bash
-git clone https://github.com/sinaptik-ai/pandas-ai/
+git clone https://github.com/invisibleanalyst/demo-antlife
 cd pandas-ai
 docker-compose build
 ```
