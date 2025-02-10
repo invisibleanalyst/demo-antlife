@@ -5,7 +5,6 @@ PandasAI platform uses a dockerized client-server architecture. You will need to
 ```bash
 git clone https://github.com/invisibleanalyst/demo-antlife
 cd demo-antlife
-docker-compose build
 ```
 
 ### 🔧 Setting Up Environment Variables
@@ -38,6 +37,7 @@ Save and exit the file. This step is crucial as the API key is required for proc
 Once you have set up the environment variables and built the platform, you can start it with:
 
 ```bash
+docker-compose build
 docker-compose up
 ```
 
